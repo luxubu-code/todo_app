@@ -22,6 +22,11 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
     setState(() {
       _selectedCategory = category;
     });
+  }  @override
+  void initState() {
+    super.initState();
+    // Tải danh sách categories khi màn hình được khởi tạo
+    context.read<CategoriesCubit>().getCategories();
   }
 
   Future<void> _addCategory() async {
@@ -101,8 +106,6 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
   }
 
   void _showAddCategoryDialog() {
-    TextEditingController titleController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -111,7 +114,7 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: titleController,
+              controller: _titleController,
               decoration: const InputDecoration(labelText: 'Tên nhóm'),
             ),
             const SizedBox(height: 10),
@@ -140,14 +143,15 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
             child: const Text('Hủy'),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              _addCategory();
+            },
             child: const Text('Thêm'),
           ),
         ],
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -162,29 +166,136 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
         ],
       ),
       body: BlocBuilder<CategoriesCubit, CategoriesState>(
-          builder: (context, state) {
-        final categories = state.categories;
-        return Column(
-          children: [
-            if (categories.isNotEmpty)
-              DropdownButton<Categories>(
-                value: _selectedCategory,
-                hint: const Text('Chọn nhóm công việc'),
-                onChanged: (category) {
-                  if (category != null) {
-                    _selectCategory(category);
-                  }
-                },
-                items: categories.map((category) {
-                  return DropdownMenuItem(
-                    value: category,
-                    child: Text(category.title ?? 'Không có tên'),
-                  );
-                }).toList(),
+        builder: (context, state) {
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state.error != null) {
+            return Center(
+              child: Text('Đã xảy ra lỗi: ${state.error}',
+                  style: const TextStyle(color: Colors.red)),
+            );
+          }
+
+          final categories = state.categories;
+
+          if (categories.isEmpty) {
+            return const Center(
+              child: Text('Chưa có nhóm công việc nào. Hãy thêm nhóm mới!'),
+            );
+          }
+
+          return Column(
+            children: [
+              // Dropdown chọn nhóm
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: DropdownButton<Categories>(
+                    value: _selectedCategory,
+                    hint: const Text('Chọn nhóm công việc'),
+                    isExpanded: true,
+                    underline: Container(), // Ẩn đường gạch chân
+                    onChanged: (category) {
+                      if (category != null) {
+                        _selectCategory(category);
+                      }
+                    },
+                    items: categories.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: Color((category.color ?? Colors.blue) as int),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              category.title ?? 'Không có tên',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
-          ],
-        );
-      }),
+
+              // Danh sách các nhóm
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+                    return Card(
+                      elevation: 2,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Color(Colors.white as int),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        title: Text(
+                          category.title ?? 'Không có tên',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'ID: ${category.id}',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                // TODO: Thêm chức năng sửa
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () {
+                                // TODO: Thêm chức năng xóa
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
   }
 }

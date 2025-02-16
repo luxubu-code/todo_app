@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:todo/data/models/categories.dart';
+import 'package:todo/data/models/tasks.dart';
 
 class DatabaseHelper {
   // Sử dụng singleton để có 1 instance duy nhất của DatabaseHelper
@@ -116,5 +117,11 @@ class DatabaseHelper {
     final db = await instance.database;
     final List<Map<String, dynamic>> categories = await db.query('Categories');
     return categories.map((map) => Categories.fromMap(map)).toList();
+  }
+
+  Future<List<Tasks>> getTasks() async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> tasks = await db.query('Tasks');
+    return tasks.map((map) => Tasks.fromMap(map)).toList();
   }
 }
