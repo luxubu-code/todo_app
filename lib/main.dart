@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:todo/bloc/tasks/tasks_cubit.dart';
 import 'package:todo/bloc/theme/theme_state.dart';
 import 'package:todo/presentation/home/home_screen.dart';
 
@@ -20,8 +21,14 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (context) => ThemeCubit()),
         BlocProvider(
-            create: (context) =>
-                CategoriesCubit(databaseHelper: DatabaseHelper.instance)),
+          create:
+              (context) =>
+                  CategoriesCubit(databaseHelper: DatabaseHelper.instance),
+        ),
+        BlocProvider(
+          create:
+              (context) => TasksCubit(databaseHelper: DatabaseHelper.instance),
+        ),
         // BlocProvider(create: (context) => TasksBloc()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(

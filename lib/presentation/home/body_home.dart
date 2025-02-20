@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:todo/presentation/home/widgets/add_button.dart';
 
 import '../../bloc/theme/theme_cubit.dart';
 import '../../bloc/theme/theme_state.dart';
@@ -50,9 +49,10 @@ class _BodyHomeState extends State<BodyHome> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: Row(
-                        mainAxisAlignment: hasTask
-                            ? MainAxisAlignment.spaceBetween
-                            : MainAxisAlignment.center,
+                        mainAxisAlignment:
+                            hasTask
+                                ? MainAxisAlignment.spaceBetween
+                                : MainAxisAlignment.center,
                         children: [
                           Text(
                             hasTask
@@ -67,11 +67,10 @@ class _BodyHomeState extends State<BodyHome> {
                             ),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
-              AddButton(),
             ],
           );
         },
