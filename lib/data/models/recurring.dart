@@ -36,4 +36,22 @@ class Recurring {
       end_date: DateTime.fromMillisecondsSinceEpoch(map['end_date']),
     );
   }
+
+  Recurring copyWith({
+    int? id,
+    int? task_id,
+    String? repeat_type,
+    int? repeat_interval,
+    DateTime? start_date,
+    DateTime? end_date,
+  }) {
+    return Recurring(
+      id: id ?? this.id,
+      task_id: task_id ?? this.task_id,
+      repeat_type: repeat_type ?? this.repeat_type,
+      repeat_interval: repeat_interval ?? this.repeat_interval,
+      start_date: start_date ?? this.start_date,
+      end_date: end_date ?? this.end_date,
+    );
+  }
 }

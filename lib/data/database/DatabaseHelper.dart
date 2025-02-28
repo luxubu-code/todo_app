@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:todo/data/models/categories.dart';
 import 'package:todo/data/models/tasks.dart';
 
 class DatabaseHelper {
@@ -15,37 +14,58 @@ class DatabaseHelper {
 
   // Lấy instance của database, nếu chưa có thì khởi tạo
   Future<Database> get database async {
-    WidgetsFlutterBinding.ensureInitialized(); // Đảm bảo Flutter đã khởi tạo trước khi truy cập database
-    if (_database != null) {
+    try {
+      WidgetsFlutterBinding.ensureInitialized(); // Đảm bảo Flutter đã khởi tạo trước khi truy cập database
+      if (_database != null) {
+        return _database!;
+      }
+      _database = await _initDB(
+        'todo.db',
+      ); // Khởi tạo database với tên 'todo.db'
       return _database!;
+    } catch (e) {
+      print('Lỗi khi lấy database: $e');
+      throw Exception('Lỗi khi lấy database: $e');
     }
-    _database = await _initDB('todo.db'); // Khởi tạo database với tên 'todo.db'
-    return _database!;
   }
 
   // Khởi tạo database và thiết lập đường dẫn
   Future<Database> _initDB(String filepath) async {
-    final dbPath =
-        await getDatabasesPath(); // Lấy đường dẫn database của hệ thống
-    final path = join(dbPath, filepath); // Nối đường dẫn với tên file database
+    try {
+      final dbPath =
+          await getDatabasesPath(); // Lấy đường dẫn database của hệ thống
+      final path = join(
+        dbPath,
+        filepath,
+      ); // Nối đường dẫn với tên file database
 
-    return await openDatabase(
-      path,
-      version:
-          1, // Định nghĩa phiên bản database, có thể dùng để migrate sau này
-      onCreate: _createDB,
-      onConfigure: _onConfigure, // Gọi _onConfigure trước khi khởi tạo
-    );
+      return await openDatabase(
+        path,
+        version:
+            1, // Định nghĩa phiên bản database, có thể dùng để migrate sau này
+        onCreate: _createDB,
+        onConfigure: _onConfigure, // Gọi _onConfigure trước khi khởi tạo
+      );
+    } catch (e) {
+      print('Lỗi khi khởi tạo database: $e');
+      throw Exception('Lỗi khi khởi tạo database: $e');
+    }
   }
 
   // Cấu hình database, bật tính năng ràng buộc khóa ngoại (foreign keys)
   Future _onConfigure(Database db) async {
-    await db.execute('PRAGMA foreign_keys = ON');
+    try {
+      await db.execute('PRAGMA foreign_keys = ON');
+    } catch (e) {
+      print('Lỗi khi cấu hình database: $e');
+      throw Exception('Lỗi khi cấu hình database: $e');
+    }
   }
 
   // Tạo các bảng trong database
   Future _createDB(Database db, int version) async {
-    await db.execute('''
+    try {
+      await db.execute('''
         CREATE TABLE Tasks(
           id INTEGER PRIMARY KEY AUTOINCREMENT, -- ID tự động tăng
           title TEXT NOT NULL,
@@ -58,16 +78,7 @@ class DatabaseHelper {
         )
         ''');
 
-    await db.execute('''
-        CREATE TABLE Categories(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT NOT NULL,
-          description TEXT,
-          color INTEGER NOT NULL -- Lưu màu sắc dưới dạng số nguyên
-        )
-        ''');
-
-    await db.execute('''
+      await db.execute('''
         CREATE TABLE Recurring(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           task_id INTEGER,
@@ -79,7 +90,7 @@ class DatabaseHelper {
         )
         ''');
 
-    await db.execute('''
+      await db.execute('''
         CREATE TABLE Reminders(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           task_id INTEGER,
@@ -88,22 +99,21 @@ class DatabaseHelper {
           FOREIGN KEY (task_id) REFERENCES Tasks(id) ON DELETE CASCADE
         )
         ''');
-
-    await db.execute('''
-        CREATE TABLE TaskCategories(
-          task_id INTEGER,
-          category_id INTEGER,
-          PRIMARY KEY (task_id, category_id), -- Đảm bảo một task chỉ thuộc một category duy nhất
-          FOREIGN KEY (task_id) REFERENCES Tasks(id) ON DELETE CASCADE,
-          FOREIGN KEY (category_id) REFERENCES Categories(id) ON DELETE CASCADE
-        )
-        ''');
+    } catch (e) {
+      print('Lỗi khi tạo database: $e');
+      throw Exception('Lỗi khi tạo database: $e');
+    }
   }
 
   // Xóa một task theo ID
   Future<int> deleteTask(int id) async {
-    final db = await instance.database;
-    return await db.delete('Tasks', where: 'id = ?', whereArgs: [id]);
+    try {
+      final db = await instance.database;
+      return await db.delete('Tasks', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Lỗi khi xóa task: $e');
+      throw Exception('Lỗi trong database deleteTask: $e');
+    }
   }
 
   // Cập nhật task theo ID
@@ -117,28 +127,21 @@ class DatabaseHelper {
         whereArgs: [id],
       );
     } catch (e) {
-      throw Exception('lỗi trong database updateTask ${e}');
+      print('Lỗi khi cập nhật task: $e');
+      throw Exception('Lỗi trong database updateTask: $e');
     }
-  }
-
-  // Chèn một danh mục (category) vào database, trả về ID của category mới được thêm
-  Future<int> insertCategory(Map<String, dynamic> category) async {
-    final db = await instance.database;
-    return await db.insert('Categories', category);
-  }
-
-  // Lấy danh sách các danh mục từ database
-  Future<List<Categories>> getCategories() async {
-    final db = await instance.database;
-    final List<Map<String, dynamic>> categories = await db.query('Categories');
-    return categories.map((map) => Categories.fromMap(map)).toList();
   }
 
   // Lấy danh sách các task từ database
   Future<List<Tasks>> getTasks() async {
-    final db = await instance.database;
-    final List<Map<String, dynamic>> tasks = await db.query('Tasks');
-    return tasks.map((map) => Tasks.fromMap(map)).toList();
+    try {
+      final db = await instance.database;
+      final List<Map<String, dynamic>> tasks = await db.query('Tasks');
+      return tasks.map((map) => Tasks.fromMap(map)).toList();
+    } catch (e) {
+      print('Lỗi khi lấy danh sách task: $e');
+      throw Exception('Lỗi trong database getTasks: $e');
+    }
   }
 
   // Chèn một task vào database, trả về ID của task mới được thêm
@@ -152,16 +155,8 @@ class DatabaseHelper {
             ConflictAlgorithm.replace, // Nếu task đã tồn tại thì ghi đè
       );
     } catch (e) {
-      throw Exception('lỗi trong database insertTask: $e');
+      print('Lỗi khi thêm task: $e');
+      throw Exception('Lỗi trong database insertTask: $e');
     }
   }
 }
-
-/*
-    📝 Tại sao insertTask trả về ID?
-    ---------------------------------------------------
-    - Khi một dòng mới được thêm vào SQLite bằng phương thức `insert()`, nó sẽ tự động gán một ID mới nếu cột ID được thiết lập là `PRIMARY KEY AUTOINCREMENT`.
-    - Phương thức `insert()` của `sqflite` trả về giá trị ID của dòng vừa được thêm.
-    - ID này có thể được sử dụng để tham chiếu đến task trong các thao tác sau này (cập nhật, xóa, hoặc liên kết với các bảng khác).
-    - Điều này giúp quản lý dữ liệu dễ dàng hơn thay vì phải truy vấn lại để tìm ID của task vừa chèn vào.
-    */

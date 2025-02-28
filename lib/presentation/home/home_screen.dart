@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:todo/bloc/navigation/navigation_cubit.dart';
 import 'package:todo/presentation/home/body_home.dart';
 import 'package:todo/presentation/tasks/task_manager_screen.dart';
 
@@ -9,9 +11,9 @@ class HomeScreen extends StatefulWidget {
     Key? key,
     // Thêm validator cho initialIndex
     this.initialIndex = 0,
-  })  : assert(initialIndex >= 0 && initialIndex <= 3),
-        // Đảm bảo initialIndex hợp lệ
-        super(key: key);
+  }) : assert(initialIndex >= 0 && initialIndex <= 3),
+       // Đảm bảo initialIndex hợp lệ
+       super(key: key);
   static final GlobalKey<_HomeScreenState> globalKey = GlobalKey();
 
   @override
@@ -21,12 +23,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late int _selectedIndex;
   late final PageController _pageController;
+  late bool fix;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _selectedIndex);
+    fix = false;
   }
 
   @override
@@ -36,26 +40,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onTap(int index) {
-    if (index >= 0 && index < _pages.length) {
-      setState(() {
-        _selectedIndex = index;
-        _pageController.jumpToPage(index);
-      });
+    if (context.read<NavigationCubit>().state == false) {
+      if (index >= 0 && index < _pages.length) {
+        setState(() {
+          _selectedIndex = index;
+          _pageController.jumpToPage(index);
+        });
+      }
+    } else {
+      if (index >= 0 && index < _buildEditModeNavItems().length) {
+        setState(() {
+          _selectedIndex = index;
+        });
+      }
     }
   }
 
   List<Widget> get _pages => [
-        BodyHome(key: PageStorageKey('home')),
-        TaskManagerScreen(
-          key: PageStorageKey('task'),
-        ),
-        // RankScreen(
-        //   key: PageStorageKey('showMore'),
-        //   initialTabIndex: widget.rankTabIndex, // Use the passed tab index
-        // ),
-        // FavouritePage(key: PageStorageKey('favourite')),
-        // ProfilePage(key: PageStorageKey('profile')),
-      ];
+    BodyHome(key: PageStorageKey('home')),
+    TaskManagerScreen(key: PageStorageKey('task')),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -72,30 +76,43 @@ class _HomeScreenState extends State<HomeScreen> {
         children: _pages,
         physics: const NeverScrollableScrollPhysics(),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.leaderboard),
-            label: 'Xếp hạng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Tủ truyện',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_box_outlined),
-            label: 'Tài khoản',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.grey,
-        unselectedItemColor: Colors.white,
-        onTap: _onTap,
+      bottomNavigationBar: BlocBuilder<NavigationCubit, bool>(
+        builder: (BuildContext context, fixState) {
+          return BottomNavigationBar(
+            items:
+                fixState
+                    ? _buildEditModeNavItems()
+                    : _buildNormalModeNavItems(),
+            currentIndex: _selectedIndex,
+            selectedItemColor: Colors.pink,
+            unselectedItemColor: Colors.green,
+            onTap: _onTap,
+          );
+        },
       ),
     );
+  }
+
+  List<BottomNavigationBarItem> _buildNormalModeNavItems() {
+    return const [
+      BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.task),
+        label: 'Quản lý công việc',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.group_work),
+        label: 'Nhóm Công việc',
+      ),
+    ];
+  }
+
+  // Danh sách icon cho chế độ sửa
+  List<BottomNavigationBarItem> _buildEditModeNavItems() {
+    return const [
+      BottomNavigationBarItem(icon: Icon(Icons.delete), label: 'Xóa'),
+      BottomNavigationBarItem(icon: Icon(Icons.edit), label: 'Chỉnh sửa'),
+      BottomNavigationBarItem(icon: Icon(Icons.done), label: 'Hoàn tất'),
+    ];
   }
 }

@@ -1,22 +1,20 @@
 class Tasks {
   final int? id;
-  final String title;
-  final String? description;
+  late final String title;
+  late final String? description;
   final DateTime? created_at;
   final DateTime? due_date;
   final String status;
   final String? image_path;
-  // final List<Categories>? categories;
 
   Tasks({
     this.id,
     required this.title,
-    required this.status,
+    this.status = 'đang hoàn thành',
     this.description,
     this.image_path,
     this.due_date,
     this.created_at,
-    // this.categories,
   });
 
   Map<String, dynamic> toMap() {
@@ -27,7 +25,6 @@ class Tasks {
       'created_at': created_at?.millisecondsSinceEpoch,
       'due_date': due_date?.millisecondsSinceEpoch,
       'status': status,
-      // 'categories': categories,
       'image_path': image_path,
     };
     map['id'] = id;
@@ -59,6 +56,8 @@ class Tasks {
     String? status,
     int? priority,
     String? imagePath,
+    int? is_repeat,
+    DateTime? repeat_days,
   }) {
     return Tasks(
       id: id ?? this.id,

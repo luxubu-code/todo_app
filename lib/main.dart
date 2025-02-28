@@ -4,7 +4,7 @@ import 'package:todo/bloc/tasks/tasks_cubit.dart';
 import 'package:todo/bloc/theme/theme_state.dart';
 import 'package:todo/presentation/home/home_screen.dart';
 
-import 'bloc/category/categories_cubit.dart';
+import 'bloc/navigation/navigation_cubit.dart';
 import 'bloc/theme/theme_cubit.dart';
 import 'data/database/DatabaseHelper.dart';
 
@@ -20,15 +20,16 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => ThemeCubit()),
-        BlocProvider(
-          create:
-              (context) =>
-                  CategoriesCubit(databaseHelper: DatabaseHelper.instance),
-        ),
+        // BlocProvider(
+        //   create:
+        //       (context) =>
+        //           CategoriesCubit(databaseHelper: DatabaseHelper.instance),
+        // ),
         BlocProvider(
           create:
               (context) => TasksCubit(databaseHelper: DatabaseHelper.instance),
         ),
+        BlocProvider(create: (context) => NavigationCubit()),
         // BlocProvider(create: (context) => TasksBloc()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(

@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 
-class BuildTextfield {
+class BuildTextField {
   /// Phương thức buildTextField tạo ra một TextFormField với các cài đặt mặc định
   /// [controller]: Quản lý dữ liệu nhập vào của TextFormField
   /// [hint]: Văn bản gợi ý hiển thị khi trường trống
   /// [icon]: Biểu tượng hiển thị ở bên trái của TextFormField
   /// [maxLines]: Số dòng tối đa hiển thị (mặc định là 1)
   Widget buildTextField(
-      TextEditingController controller, String hint, IconData icon,
-      {int maxLines = 1}) {
+    TextEditingController controller,
+    String hint,
+    IconData icon, {
+    int maxLines = 1,
+  }) {
     return TextFormField(
       // Liên kết controller với TextFormField để theo dõi và quản lý nội dung nhập vào
       controller: controller,
       // Đặt kiểu chữ cho nội dung nhập (màu trắng)
-      // style: const TextStyle(color: Colors.white),
+      style: const TextStyle(fontSize: 16),
       // Xác định số dòng tối đa của TextFormField
       maxLines: maxLines,
       // Cấu hình giao diện của TextFormField thông qua InputDecoration
@@ -36,8 +39,8 @@ class BuildTextfield {
         ),
       ),
       // Hàm validator kiểm tra dữ liệu nhập vào; nếu trống, trả về thông báo lỗi
-      validator: (value) =>
-          (value?.isEmpty ?? true) ? "Vui lòng nhập $hint" : null,
+      validator:
+          (value) => (value?.isEmpty ?? true) ? "Vui lòng nhập $hint" : null,
     );
   }
 }
